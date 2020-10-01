@@ -31,27 +31,27 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Test with `pytest`
-      run: |
-        pip install pytest pytest-cov moto
-        pytest --verbose --color=yes --cov=my_package --cov-report=xml --assert=plain --cov-report=html
+    # - name: Test with `pytest`
+    #   run: |
+    #     pip install pytest pytest-cov moto
+    #     pytest --verbose --color=yes --cov=my_package --cov-report=xml --assert=plain --cov-report=html
 
-    - name: Upload Coverage Reports as Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage-report
-        path: htmlcov/
+    # - name: Upload Coverage Reports as Artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: coverage-report
+    #     path: htmlcov/
 
-    - name: ZIP Assets
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-      run: |
-        zip -r coverage.zip ./htmlcov
+    # - name: ZIP Assets
+    #   if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #   run: |
+    #     zip -r coverage.zip ./htmlcov
 
-    - name: Upload Coverage Reports to CodeCov
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-      run: npx codecov
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    # - name: Upload Coverage Reports to CodeCov
+    #   if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    #   run: npx codecov
+    #   env:
+    #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Configure AWS credentials
       if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/master')
