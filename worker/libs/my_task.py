@@ -29,9 +29,9 @@ COMPONENTS_MAP = {
 }
 
 
-START_PROCESSING_MSG = "Processing message {} (composition_id: {})"
-MESSAGE_PROCESSED_MSG = "Processed message {} (composition_id: {})"
-MESSAGE_PROCESSING_FAILED_MSG = "Failed to process message {} (composition_id: {}"
+START_PROCESSING_MSG = "Processing message {} (contract_id: {})"
+MESSAGE_PROCESSED_MSG = "Processed message {} (contract_id: {})"
+MESSAGE_PROCESSING_FAILED_MSG = "Failed to process message {} (contract_id: {}"
 
 
 class MyTask(AbstractTask):
@@ -47,7 +47,7 @@ class MyTask(AbstractTask):
     @staticmethod
     def run(msg):
         msg_id, contract_id, text, categories = parse_msg(msg)
-        logger.info(START_PROCESSING_MSG.format(msg_id, composition_id))
+        logger.info(START_PROCESSING_MSG.format(msg_id, contract_id))
 
         if not text:
             return dict()
@@ -63,22 +63,22 @@ class MyTask(AbstractTask):
         result = flatten_label_values(result)
 
         if result:
-            upload_results_using_multithreading(result, composition_id)
+            upload_results_using_multithreading(result, contract_id)
             settings.sqs_client.delete_message(
                 QueueUrl=config.sqs["QUEUE_URL"], ReceiptHandle=msg["ReceiptHandle"]
             )
-            logger.info(MESSAGE_PROCESSED_MSG.format(msg_id, composition_id))
+            logger.info(MESSAGE_PROCESSED_MSG.format(msg_id, contract_id))
         else:
-            logger.error(MESSAGE_PROCESSING_FAILED_MSG.format(msg_id, composition_id))
+            logger.error(MESSAGE_PROCESSING_FAILED_MSG.format(msg_id, contract_id))
 
 
 def parse_msg(msg):
     msg_id = msg["MessageId"]
     msg_body = json.loads(msg["Body"])
-    composition_id = msg_body["id"]
+    contract_id = msg_body["id"]
     text = msg_body["composition_raw"]
     categories = msg_body["categories"]
-    return msg_id, composition_id, text, categories
+    return msg_id, contract_id, text, categories
 
 
 def make_nlp_pipe_and_components(categories: dict):
@@ -122,11 +122,11 @@ def flatten_label_values(coh_metrix_output: dict) -> list:
     return label_values
 
 
-def upload_results_using_multithreading(result, composition_id):
+def upload_results_using_multithreading(result, contract_id):
     list_of_inputs = []
     for label, value in result.items():
-        csv_row = [composition_id, value]
-        inputs = composition_id, label, csv_row
+        csv_row = [contract_id, value]
+        inputs = contract_id, label, csv_row
         list_of_inputs.append(inputs)
 
     # IO bound task > Use ThreadPool
@@ -137,16 +137,16 @@ def upload_results_using_multithreading(result, composition_id):
 
 
 def export_and_upload_to_s3(inputs: tuple):
-    composition_id, label, csv_row = inputs
+    contract_id, label, csv_row = inputs
 
-    l_path = settings.TMP_OUTPUT_DIR / "{}/{}.csv".format(label, composition_id)
+    l_path = settings.TMP_OUTPUT_DIR / "{}/{}.csv".format(label, contract_id)
     l_path.parent.mkdir(exist_ok=True, parents=True)
     with open(l_path, "w") as outfile:
         writer = csv.writer(outfile)
         writer.writerow(csv_row)
 
     s3_full_path = "{}/label={}/{}.csv".format(
-        config.s3["BUCKET_LOCATION"], label, composition_id
+        config.s3["BUCKET_LOCATION"], label, contract_id
     )
     settings.s3_bucket.upload_file(str(l_path), s3_full_path)
     logger.debug("uploaded {} to {}".format(l_path, s3_full_path))
