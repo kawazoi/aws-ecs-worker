@@ -8,7 +8,6 @@ LOG_LEVEL = logging.DEBUG if DEBUG else logging.INFO
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
 
-
 class ConfigManager:
     """
     Use this class instead of making direct reference to env

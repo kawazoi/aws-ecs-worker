@@ -50,7 +50,9 @@ class BasePlatform(core.Construct):
 
 
 class ServiceStack(core.Stack):
-    def __init__(self, scope: core.Construct, id: str, stage: str, config: dict, **kwargs) -> None:
+    def __init__(
+        self, scope: core.Construct, id: str, stage: str, config: dict, **kwargs
+    ) -> None:
         super().__init__(scope, id, **kwargs)
 
         self.base_platform = BasePlatform(self, self.stack_name, stage)

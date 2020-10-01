@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 NO_RESPONSE_FROM_SQS_MSG = "Failed to pool messages from queue. (queue: {})"
-NO_MESSAGES_MSG = ("No messages pooled. Waiting {} second(s) to try again.")
+NO_MESSAGES_MSG = "No messages pooled. Waiting {} second(s) to try again."
 ERROR_PROCESSING_MESSAGES_MSG = "Failed to process messages."
 
 

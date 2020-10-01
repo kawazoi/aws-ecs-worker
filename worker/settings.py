@@ -43,6 +43,7 @@ def init_nlp_marker():
         marker_categories=["pontos", "virgulas", "oralidades", "conectivos"],
     )
 
+
 def init_sqs_client_and_s3_bucket():
     global sqs_client
     global s3_bucket
