@@ -85,7 +85,7 @@ jobs:
       with:
         task-definition: task-definition-stg.json
         container-name: ${{ secrets.SERVICE_NAME }}-staging
-        image: ${{ steps.build-image.outputs.image }}
+        image: ${{ steps.build-image-stg.outputs.image }}
 
     - name: Deploy Service Staging
       if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
@@ -104,7 +104,7 @@ jobs:
 
     - name: Build and Push to ECR Production
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-      id: build-image-stg
+      id: build-image-prd
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-production
@@ -121,7 +121,7 @@ jobs:
       with:
         task-definition: task-definition-prd.json
         container-name: ${{ secrets.SERVICE_NAME }}-production
-        image: ${{ steps.build-image.outputs.image }}
+        image: ${{ steps.build-image-prd.outputs.image }}
 
     - name: Deploy Service Production
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
