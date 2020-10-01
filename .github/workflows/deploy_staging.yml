@@ -1,4 +1,4 @@
-name: DeployStaging
+name: CIStaging
 
 on:
   push:
@@ -6,10 +6,28 @@ on:
       - staging
 
 jobs:
-  buildTestPush:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+  buildPushEcr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-staging
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
 
   deployStaging:
     needs: buildTestPush
@@ -22,7 +40,7 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'diff'
-        cdk_stack: '${{ secrets.SERVICE_NAME }}-staging'
+        cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
         working_dir: 'cdk'
         actions_comment: true
       env:
@@ -35,7 +53,7 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'deploy'
-        cdk_stack: '${{ secrets.SERVICE_NAME }}-staging'
+        cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
         working_dir: 'cdk'
         actions_comment: false
         args: '--require-approval never'

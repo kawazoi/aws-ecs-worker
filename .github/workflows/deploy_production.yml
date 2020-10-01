@@ -22,7 +22,7 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'diff'
-        cdk_stack: '${{ secrets.SERVICE_NAME }}-production'
+        cdk_stack: ${{ secrets.SERVICE_NAME }}-production
         working_dir: 'cdk'
         actions_comment: true
       env:
@@ -35,7 +35,7 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'deploy'
-        cdk_stack: '${{ secrets.SERVICE_NAME }}-production'
+        cdk_stack: ${{ secrets.SERVICE_NAME }}-production
         working_dir: 'cdk'
         actions_comment: false
         args: '--require-approval never'
