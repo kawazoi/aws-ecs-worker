@@ -1,0 +1,21 @@
+version: "3"
+services:
+  coh-metrix-worker:
+    build:
+      context: .
+      args:
+        # Build-time arguments
+        - GIT_TOKEN=$GIT_TOKEN
+        - AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+        - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    env_file: .env
+    environment:
+      # this tells boto3 to ignore the credential config if running locally.
+      - AWS_CONFIG_FILE=/dev/null
+    networks:
+      - internal-services
+
+networks:
+  internal-services:
+    external: true
