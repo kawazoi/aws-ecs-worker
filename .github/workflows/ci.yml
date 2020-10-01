@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branch: [staging, master]
+  pull_reqest:
+    branch: [staging, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache Requirements
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Test with `pytest`
+      run: |
+        pip install pytest pytest-cov moto
+        pytest --verbose --color=yes --cov=my_package --cov-report=xml --assert=plain --cov-report=html
+
+    - name: Upload Coverage Reports as Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: htmlcov/
+
+    - name: ZIP Assets
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: |
+        zip -r coverage.zip ./htmlcov
+
+    - name: Upload Coverage Reports to CodeCov
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: npx codecov
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Configure AWS credentials
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/master')
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Login to Amazon ECR
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/master')
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and Push to ECR Staging
+      if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+      id: build-image-stg
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-staging
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Update Task Def Staging
+      if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+      id: task-def-stg
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition-stg.json
+        container-name: ${{ secrets.SERVICE_NAME }}-staging
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Service Staging
+      if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def-stg.outputs.task-definition }}
+        service: ${{ secrets.SERVICE_NAME }}-staging
+        cluster: ${{ secrets.CLUSTER_NAME_STG }}
+        wait-for-service-stability: true
+
+    - name: Run Semantic Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      run: npx semantic-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.CUSTOM_GIT_TOKEN }}
+
+    - name: Build and Push to ECR Production
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      id: build-image-stg
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-production
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Update Task Def Prdocution
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      id: task-def-prd
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition-prd.json
+        container-name: ${{ secrets.SERVICE_NAME }}-production
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Service Production
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def-prd.outputs.task-definition }}
+        service: ${{ secrets.SERVICE_NAME }}-production
+        cluster: ${{ secrets.CLUSTER_NAME_PRD }}
+        wait-for-service-stability: true
+
+    - name: Send Slack Notification Staging
+      uses: rtCamp/action-slack-notify@master
+      env:
+        SLACK_TITLE: 'Message:'
+        SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-staging` deployed.'
+        SLACK_COLOR: '#3278BD'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}
+
+    - name: Send Slack Notification Production
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+      uses: rtCamp/action-slack-notify@master
+      env:
+        SLACK_TITLE: 'Message:'
+        SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-production` deployed.'
+        SLACK_COLOR: '#3278BD'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}

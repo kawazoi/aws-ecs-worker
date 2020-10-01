@@ -1,71 +1,109 @@
-name: CIStaging
+# name: CIStaging
 
-on:
-  push:
-    branches:
-      - staging
+# on:
+#   push:
+#     branches:
+#       - staging
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: Set up Python ${{ matrix.python-version }}
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: ${{ matrix.python-version }}
+#     - name: Cache Requirements
+#       uses: actions/cache@v2
+#       with:
+#         path: ~/.cache/pip
+#         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+#         restore-keys: |
+#           ${{ runner.os }}-pip-
+#     - name: Install Dependencies
+#       run: |
+#         python -m pip install --upgrade pip
+#         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+#     - name: Test with `pytest`
+#       run: |
+#         pip install pytest pytest-cov moto
+#         pytest --verbose --color=yes --cov=my_package --cov-report=xml --assert=plain --cov-report=html
+#     - name: Upload Coverage Reports as Artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: coverage-report
+#         path: htmlcov/
+#     - name: ZIP Assets
+#       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+#       run: |
+#         zip -r coverage.zip ./htmlcov
+#     - name: Upload Coverage Reports to CodeCov
+#       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+#       run: npx codecov
+#       env:
+#         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+#     - name: Run Semantic Release
+#       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+#       run: npx semantic-release
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.CUSTOM_GIT_TOKEN }}
 
-  buildPushEcr:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+#   buildPushEcr:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v2
+#     - name: Login to Amazon ECR
+#       id: login-ecr
+#       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-staging
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#     - name: Build, tag, and push image to Amazon ECR
+#       env:
+#         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#         ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-staging
+#         IMAGE_TAG: ${{ github.sha }}
+#       run: |
+#         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+#         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
 
-  deployStaging:
-    needs: buildTestPush
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
+#   deployStaging:
+#     needs: buildTestPush
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v2
 
-    - name: Run CDK Diff Staging
-      id: diff
-      uses: youyo/aws-cdk-github-actions@v1.1.10
-      with:
-        cdk_subcommand: 'diff'
-        cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
-        working_dir: 'cdk'
-        actions_comment: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.CUSTOM_GIT_TOKEN }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+#     - name: Run CDK Diff Staging
+#       id: diff
+#       uses: youyo/aws-cdk-github-actions@v1.1.10
+#       with:
+#         cdk_subcommand: 'diff'
+#         cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
+#         working_dir: 'cdk'
+#         actions_comment: true
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.CUSTOM_GIT_TOKEN }}
+#         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    - name: Run CDK Deploy Staging
-      uses: youyo/aws-cdk-github-actions@v1.1.10
-      with:
-        cdk_subcommand: 'deploy'
-        cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
-        working_dir: 'cdk'
-        actions_comment: false
-        args: '--require-approval never'
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+#     - name: Run CDK Deploy Staging
+#       uses: youyo/aws-cdk-github-actions@v1.1.10
+#       with:
+#         cdk_subcommand: 'deploy'
+#         cdk_stack: ${{ secrets.SERVICE_NAME }}-staging
+#         working_dir: 'cdk'
+#         actions_comment: false
+#         args: '--require-approval never'
+#       env:
+#         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#         AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
-    - name: Send Slack Notification
-      uses: rtCamp/action-slack-notify@master
-      env:
-        SLACK_TITLE: 'Message:'
-        SLACK_MESSAGE: 'Service ${{ secrets.SERVICE_NAME }}-staging deployed.'
-        SLACK_COLOR: '#3278BD'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}
+#     - name: Send Slack Notification
+#       uses: rtCamp/action-slack-notify@master
+#       env:
+#         SLACK_TITLE: 'Message:'
+#         SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-staging` deployed.'
+#         SLACK_COLOR: '#3278BD'
+#         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}
