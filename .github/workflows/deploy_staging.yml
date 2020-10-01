@@ -22,7 +22,8 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'diff'
-        cdk_stack: 'nlp-ecs-cluster-stg'
+        cdk_stack: '${{ secrets.SERVICE_NAME }}-staging'
+        working_dir: 'cdk'
         actions_comment: true
       env:
         GITHUB_TOKEN: ${{ secrets.CUSTOM_GIT_TOKEN }}
@@ -34,18 +35,19 @@ jobs:
       uses: youyo/aws-cdk-github-actions@v1.1.10
       with:
         cdk_subcommand: 'deploy'
-        cdk_stack: 'nlp-ecs-cluster-stg'
+        cdk_stack: '${{ secrets.SERVICE_NAME }}-staging'
+        working_dir: 'cdk'
         actions_comment: false
         args: '--require-approval never'
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: 'us-west-2'
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
     - name: Send Slack Notification
       uses: rtCamp/action-slack-notify@master
       env:
         SLACK_TITLE: 'Message:'
-        SLACK_MESSAGE: 'AWS ECS Cluster `Staging` updated.'
+        SLACK_MESSAGE: 'Service ${{ secrets.SERVICE_NAME }}-staging deployed.'
         SLACK_COLOR: '#3278BD'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}
