@@ -6,12 +6,11 @@ import sys
 
 import settings
 from core import config as cfg
-from libs.coh_metrix_task import CohMetrixTask
+from libs.my_task import MyTask
 
 
 logging.basicConfig(level=cfg.LOG_LEVEL, format=cfg.LOG_FORMAT)
 logger = logging.getLogger(__name__)
-
 
 NO_RESPONSE_FROM_SQS_MSG = "Failed to pool messages from queue. (queue: {})"
 NO_MESSAGES_MSG = "No messages pooled. Waiting {} second(s) to try again."
@@ -20,8 +19,9 @@ ERROR_PROCESSING_MESSAGES_MSG = "Failed to process messages."
 
 async def main():
     config = cfg.ConfigManager(echo=True)
-    settings.init_resources()
+    # settings.init_resources()
     settings.init_sqs_client_and_s3_bucket()
+    logger.info(config.sqs)
 
     loop = asyncio.get_running_loop()
 
@@ -37,16 +37,17 @@ async def main():
             logger.error(resp)
 
         elif "Messages" not in resp:
-            SLEEP_TIME = 1
-            logger.info(NO_MESSAGES_MSG.format(config.sqs["QUEUE_URL"], SLEEP_TIME))
-            await asyncio.sleep(SLEEP_TIME)
+            retry_cd = config.sqs["RETRY_COOLDOWN_SECONDS"]
+            logger.info(NO_MESSAGES_MSG.format(retry_cd))
+            await asyncio.sleep(retry_cd)
 
         else:
             msgs = resp["Messages"]
 
-            for message in msgs:
+            for msg in msgs:
                 try:
-                    task_func_partial = functools.partial(CohMetrixTask.run, message)
+                    print(msg)
+                    task_func_partial = functools.partial(MyTask.run, msg)
                     with concurrent.futures.ProcessPoolExecutor() as pool:
                         await loop.run_in_executor(pool, task_func_partial)
 

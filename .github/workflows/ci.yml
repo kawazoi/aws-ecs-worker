@@ -1,13 +1,13 @@
 name: CI
 
 on:
-  push:
-    branch: [staging, master]
   pull_request:
+    branch: [staging, master]
+  push:
     branch: [staging, master]
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     steps:
 
@@ -71,7 +71,7 @@ jobs:
       id: build-image-stg
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-staging
+        ECR_REPOSITORY: ${{ secrets.API_NAME }}-staging
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -84,7 +84,7 @@ jobs:
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition-stg.json
-        container-name: ${{ secrets.SERVICE_NAME }}-staging
+        container-name: ${{ secrets.API_NAME }}-staging
         image: ${{ steps.build-image-stg.outputs.image }}
 
     - name: Deploy Service Staging
@@ -92,7 +92,7 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def-stg.outputs.task-definition }}
-        service: ${{ secrets.SERVICE_NAME }}-staging
+        service: ${{ secrets.API_NAME }}-staging
         cluster: ${{ secrets.CLUSTER_NAME_STG }}
         wait-for-service-stability: true
 
@@ -107,7 +107,7 @@ jobs:
       id: build-image-prd
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ secrets.SERVICE_NAME }}-production
+        ECR_REPOSITORY: ${{ secrets.API_NAME }}-production
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -120,7 +120,7 @@ jobs:
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition-prd.json
-        container-name: ${{ secrets.SERVICE_NAME }}-production
+        container-name: ${{ secrets.API_NAME }}-production
         image: ${{ steps.build-image-prd.outputs.image }}
 
     - name: Deploy Service Production
@@ -128,7 +128,7 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def-prd.outputs.task-definition }}
-        service: ${{ secrets.SERVICE_NAME }}-production
+        service: ${{ secrets.API_NAME }}-production
         cluster: ${{ secrets.CLUSTER_NAME_PRD }}
         wait-for-service-stability: true
 
@@ -136,7 +136,7 @@ jobs:
       uses: rtCamp/action-slack-notify@master
       env:
         SLACK_TITLE: 'Message:'
-        SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-staging` deployed.'
+        SLACK_MESSAGE: 'Service `${{ secrets.API_NAME }}-staging` deployed.'
         SLACK_COLOR: '#3278BD'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}
 
@@ -145,6 +145,6 @@ jobs:
       uses: rtCamp/action-slack-notify@master
       env:
         SLACK_TITLE: 'Message:'
-        SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-production` deployed.'
+        SLACK_MESSAGE: 'Service `${{ secrets.API_NAME }}-production` deployed.'
         SLACK_COLOR: '#3278BD'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}

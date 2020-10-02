@@ -1,42 +1,25 @@
 FROM python:3.7
 LABEL maintainer="lucas@lexter.ai"
 
+ENV API_NAME=my-worker
 WORKDIR /app
+
+COPY worker/requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+
+ARG GIT_TOKEN
+ARG LEXTER_DATA_VERSION=master
+# RUN pip install git+https://${GIT_TOKEN}@github.com/lexter-ai/lexter-data.git@${LEXTER_DATA_VERSION}
+
 RUN apt-get update
 RUN apt-get install gettext -y
 
-# Install awscli
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-RUN unzip awscliv2.zip
-RUN ./aws/install
-
-# Install requirements
-COPY 3_consumer/requirements.txt /app
-RUN pip install numpy==1.19.1
-RUN pip install -r requirements.txt
-
-# Install letrusnlp
-ARG GIT_TOKEN
-ARG LETRUSNLP_VERSION=DEV_v1.1.8
-RUN pip install -U git+https://${GIT_TOKEN}@github.com/letrustech/letrus-nlp.git@${LETRUSNLP_VERSION}
-RUN python3 -m nltk.downloader wordnet
-RUN python3 -m nltk.downloader omw
-
-# Download resources
-COPY scripts/ /app/scripts
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ARG AWS_DEFAULT_REGION
-ARG SPACY_MODEL_NAME=pt_lexter_news_tagger_parser_sm
-ARG SPACY_MODEL_VERSION=0.0.0
-RUN python scripts/download_resources.py
-RUN python scripts/install_spacy_model.py
-
-COPY aws-config.template /app/aws-config.template
+COPY .config.template .
 RUN mkdir ~/.aws/
-RUN envsubst < /app/aws-config.template > ~/.aws/config
-RUN rm /app/aws-config.template
+RUN envsubst < /app/.config.template > ~/.aws/config
+RUN rm /app/.config.template
+COPY . /app
 
-COPY 3_consumer/ /app
-
-CMD ["python", "run_consumer.py"]
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["python", "worker/run_worker.py"]

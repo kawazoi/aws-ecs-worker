@@ -1,7 +1,11 @@
 import logging
 import os
+
+from dotenv import load_dotenv
 from typing import Optional, Any
 
+
+load_dotenv()
 
 DEBUG = bool(int(os.environ.get("DEBUG", "0")))
 LOG_LEVEL = logging.DEBUG if DEBUG else logging.INFO
@@ -20,41 +24,12 @@ class ConfigManager:
     @property
     def sqs(self) -> dict:
         return dict(
+            QUEUE_NAME=self._fetch_from_env("QUEUE_NAME"),
             QUEUE_URL=self._fetch_from_env("SQS_QUEUE_URL"),
-            DELAY_SECONDS=int(self._fetch_from_env("SQS_DELAY_SECONDS", 10)),
-            MAX_RETRIES=int(self._fetch_from_env("SQS_MAX_WORKER_RETRIES", 1)),
-            RETRY_COOLDOWN_SECONDS=int(
-                self._fetch_from_env("SQS_RETRY_COOLDOWN_SECONDS", 30)
-            ),
             BATCH_SIZE=int(self._fetch_from_env("SQS_BATCH_SIZE", 10)),
-        )
-
-    @property
-    def s3(self) -> dict:
-        return dict(
-            BUCKET=self._fetch_from_env("S3_BUCKET"),
-            BUCKET_LOCATION=self._fetch_from_env("S3_BUCKET_LOCATION"),
-        )
-
-    @property
-    def spellchecker(self) -> dict:
-        return dict(
-            URL=self._fetch_from_env("SPELLCHECKER_URL"),
-            TOKEN=self._fetch_from_env("SPELLCHECKER_TOKEN", ""),
-        )
-
-    @property
-    def languagetool(self) -> dict:
-        return dict(
-            URL=self._fetch_from_env("LANGUAGETOOL_URL"),
-            TOKEN=self._fetch_from_env("LANGUAGETOOL_TOKEN", ""),
-        )
-
-    @property
-    def spacy(self) -> dict:
-        return dict(
-            SPACY_MODEL_NAME=self._fetch_from_env("SPACY_MODEL_NAME"),
-            SPACY_MODEL_VERSION=self._fetch_from_env("SPACY_MODEL_VERSION", ""),
+            RETRY_COOLDOWN_SECONDS=int(
+                self._fetch_from_env("SQS_RETRY_COOLDOWN_SECONDS", 10)
+            ),
         )
 
     def _fetch_from_env(self, varname: str = "", default: Any = None) -> Optional[str]:

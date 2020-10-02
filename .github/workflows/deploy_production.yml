@@ -22,7 +22,7 @@
 #       uses: youyo/aws-cdk-github-actions@v1.1.10
 #       with:
 #         cdk_subcommand: 'diff'
-#         cdk_stack: ${{ secrets.SERVICE_NAME }}-production
+#         cdk_stack: ${{ secrets.API_NAME }}-production
 #         working_dir: 'cdk'
 #         actions_comment: true
 #       env:
@@ -35,7 +35,7 @@
 #       uses: youyo/aws-cdk-github-actions@v1.1.10
 #       with:
 #         cdk_subcommand: 'deploy'
-#         cdk_stack: ${{ secrets.SERVICE_NAME }}-production
+#         cdk_stack: ${{ secrets.API_NAME }}-production
 #         working_dir: 'cdk'
 #         actions_comment: false
 #         args: '--require-approval never'
@@ -48,6 +48,6 @@
 #       uses: rtCamp/action-slack-notify@master
 #       env:
 #         SLACK_TITLE: 'Message:'
-#         SLACK_MESSAGE: 'Service `${{ secrets.SERVICE_NAME }}-production` deployed.'
+#         SLACK_MESSAGE: 'Service `${{ secrets.API_NAME }}-production` deployed.'
 #         SLACK_COLOR: '#3278BD'
 #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_NLP_ALERTS }}

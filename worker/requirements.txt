@@ -1,6 +1,6 @@
--e git+https://github.com/contemmcm/PETRUS.git@master#egg=petrus
-boto3==1.15.0
+asyncio
+boto3
 nltk
-pylint==2.4.4
-scipy==1.1.0
+python-dotenv
 spacy
+tornado

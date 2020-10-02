@@ -10,6 +10,11 @@
 - Python3.7
 
 
+## Initial setup
+
+1. Create
+
+
 ## Step by Step
 
 ### 1. Build and push image to ECR
@@ -17,3 +22,11 @@
 
 ### 2. CDK Deploy service
 
+
+
+### Testing
+
+    ```bash
+    aws sqs create-queue \
+            --queue-name test-my-worker
+    ```

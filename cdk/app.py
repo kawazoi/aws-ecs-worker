@@ -11,7 +11,7 @@ load_dotenv()
 _env = core.Environment(
     account=getenv("AWS_ACCOUNT_ID"), region=getenv("AWS_DEFAULT_REGION")
 )
-svc = getenv("SERVICE_NAME")
+svc = getenv("API_NAME")
 
 # Create app
 app = core.App()
