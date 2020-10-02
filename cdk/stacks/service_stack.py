@@ -72,10 +72,16 @@ class ServiceStack(core.Stack):
             "{}-svc".format(self.stack_name),
             cluster=self.base_platform.ecs_cluster,
             family=self.stack_name,
+            service_name=self.stack_name,
             image=aws_ecs.ContainerImage.from_registry("amazon/amazon-ecs-sample"),
             desired_task_count=0,
             max_scaling_capacity=10,
             memory_reservation_mib=1024,
             cpu=512,
+            scaling_steps=[
+                {"upper": 0, "change": -1},
+                {"lower": 1, "change": +1},
+                {"lower": 500, "change": +5},
+            ],
             queue=self.queue,
         )

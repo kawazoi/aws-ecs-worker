@@ -1,7 +1,7 @@
 {
     "containerDefinitions": [
         {
-            "name": "QueueProcessingContainer",
+            "name": "my-worker-staging",
             "image": "amazon/amazon-ecs-sample",
             "cpu": 512,
             "memoryReservation": 1024,
