@@ -83,7 +83,7 @@ jobs:
       id: task-def-stg
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: task-definition.json
+        task-definition: task-definition-staging.json
         container-name: ${{ secrets.API_NAME }}-staging
         image: ${{ steps.build-image-stg.outputs.image }}
 

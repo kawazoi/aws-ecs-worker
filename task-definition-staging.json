@@ -1,0 +1,78 @@
+{
+    "containerDefinitions": [
+        {
+            "name": "QueueProcessingContainer",
+            "image": "amazon/amazon-ecs-sample",
+            "cpu": 512,
+            "memoryReservation": 1024,
+            "links": [],
+            "portMappings": [],
+            "essential": true,
+            "entryPoint": [],
+            "command": [],
+            "environment": [
+                {
+                    "name": "QUEUE_NAME",
+                    "value": "my-worker-staging-myworkerstagingqueueD5144062-1G9GSCLNOFHGA"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [],
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "dockerLabels": {},
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "my-worker-staging-myworkerstagingsvcQueueProcessingTaskDefQueueProcessingContainerLogGroupCA27EEE5-MFOLGNWEQQ9Q",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "my-worker-staging-svc"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "my-worker-staging",
+    "taskRoleArn": "my-worker-staging-myworkerstagingsvcQueueProcessin-1R4VEGPMY8TL4",
+    "executionRoleArn": "my-worker-staging-myworkerstagingsvcQueueProcessin-121ISWEG34O7E",
+    "networkMode": "bridge",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2"
+    ],
+    "requiresCompatibilities": [
+        "EC2"
+    ]
+}

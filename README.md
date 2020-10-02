@@ -34,7 +34,16 @@
 
 ### Testing
 
-    ```bash
-    aws sqs create-queue \
-            --queue-name test-my-worker
-    ```
+```bash
+aws sqs create-queue \
+        --queue-name test-my-worker
+```
+
+
+### Get task definition
+
+```bash
+aws ecs describe-task-definition \
+    --task-definition ${API_NAME}-staging \
+    --query taskDefinition > task-definition-staging.json
+```
