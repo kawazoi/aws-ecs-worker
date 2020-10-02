@@ -12,7 +12,15 @@
 
 ## Initial setup
 
-1. Create
+### Deploy Cloudformation stack using CDK (initial setup only)
+- The `ServiceStack` creates the following resources:
+    - ECR Repository (empty)
+    - SQS Queue and Dead-Letter-Queue
+    - CloudWatch Alarm
+    - ECS Task Definition (with QUEUE_NAME as environment variable)
+    - ECS Service, with AutoScalling
+    - Task Definition and Task role and policies
+    - Log Group
 
 
 ## Step by Step

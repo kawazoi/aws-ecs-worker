@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_servicediscovery,
     aws_iam,
     aws_sqs,
+    aws_ecr,
     core,
 )
 
@@ -57,6 +58,10 @@ class ServiceStack(core.Stack):
 
         self.base_platform = BasePlatform(self, self.stack_name, stage)
 
+        self.ecr_repo = aws_ecr.Repository(
+            self, "{}-ecr".format(self.stack_name), repository_name=self.stack_name
+        )
+
         self.queue = aws_sqs.Queue(self, "{}-queue".format(self.stack_name))
 
         self.dlqueue = aws_sqs.DeadLetterQueue(max_receive_count=5, queue=self.queue)
@@ -66,6 +71,7 @@ class ServiceStack(core.Stack):
             self,
             "{}-svc".format(self.stack_name),
             cluster=self.base_platform.ecs_cluster,
+            family=self.stack_name,
             image=aws_ecs.ContainerImage.from_registry("amazon/amazon-ecs-sample"),
             desired_task_count=0,
             max_scaling_capacity=10,
